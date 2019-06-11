@@ -1,11 +1,15 @@
 import 'dart:async';
 
+class _Variable<T> {
+  final T value;
+  _Variable(this.value);
+}
+
 /// Implements zone-scoped values.
 class ZoneLocal<T> {
-  static final Object _null = Object(); // A helper for storing null value.
   static bool _isEveryDefaultValueFrozen = false;
   T _defaultValue;
-  bool _isDefaultValueFrozen = false;
+  bool _isDefaultValueImmutable = false;
   Object _zoneValuesKey; // Lazily initialized
 
   /// Constructs an instance that has the default value.
@@ -16,89 +20,102 @@ class ZoneLocal<T> {
 
   /// Changes the current default value.
   ///
-  /// If [isDefaultValueFrozen] is `true`, this setter throws [StateError].
+  /// If [isDefaultValueImmutable] is `true`, this setter throws [StateError].
   set defaultValue(T value) {
-    if (isDefaultValueFrozen) {
-      throw StateError("Default value is frozen");
+    if (isDefaultValueImmutable) {
+      throw StateError("Default value is immutable");
     }
     this._defaultValue = value;
   }
 
-  /// Returns map key for [Zone.fork] parameter `zoneValues`.
+  @Deprecated("This feature will not be supported in the future")
   Object get zoneEntryKey {
     _zoneValuesKey ??= Object();
     return _zoneValuesKey;
   }
 
-  /// Fills a map that's used as [Zone.fork] parameter `zoneValues`.
+  /// Fills a map for [Zone.fork].
   void fillZoneValuesMap(Map<dynamic, dynamic> values, Object value) {
     _zoneValuesKey ??= Object();
-    if (value == null) {
-      value = _null;
-    }
-    values[_zoneValuesKey] = value;
+    values[_zoneValuesKey] = new _Variable(value);
   }
 
-  /// Tells whether [defaultValue] is frozen.
+  /// Tells whether [defaultValue] is immutable.
   ///
-  /// You change the value with [freezeDefaultValue] and [Zone.freezeDefaultValues].
-  bool get isDefaultValueFrozen =>
-      _isEveryDefaultValueFrozen || this._isDefaultValueFrozen;
+  /// You can make default values immutable with [freezeDefaultValue] and
+  /// [Zone.freezeDefaultValues].
+  bool get isDefaultValueImmutable =>
+      _isEveryDefaultValueFrozen || this._isDefaultValueImmutable;
+
+  @Deprecated("Use 'isDefaultValueImmutable'")
+  bool get isDefaultValueFrozen => isDefaultValueImmutable;
 
   /// Returns the current zone-scoped value.
-  ///
-  /// If none was defined by [Zone.current] (or parent zones), returns [defaultValue].
   T get value {
     final zoneValueKey = this._zoneValuesKey;
-    if (zoneValueKey != null) {
-      final value = Zone.current[zoneValueKey];
-      if (value != null) {
-        if (identical(_null, value)) {
-          return null;
-        }
-        return value;
-      }
+    if (zoneValueKey == null) {
+      // Zones haven't been forked yet,
+      // so we don't need to access the zone data at all.
+      return defaultValue;
+    }
+
+    // Access zone data.
+    final value = Zone.current[zoneValueKey];
+
+    // Do we have a zone-local variable?
+    if (value is _Variable) {
+      return value.value;
     }
     return defaultValue;
   }
 
   /// Freezes the default value.
   ///
-  /// If [isDefaultValueFrozen] is `true`, throws [StateError].
-  /// After calling this method, [isDefaultValueFrozen] will be `true`.
+  /// If [isDefaultValueImmutable] is `true`, throws [StateError].
+  /// After calling this method, [isDefaultValueImmutable] will be `true`.
   void freezeDefaultValue(T value) {
     this.defaultValue = value;
-    this._isDefaultValueFrozen = true;
+    this._isDefaultValueImmutable = true;
   }
 
-  /// A convenience method for creating a fork of [Zone.current] where
-  /// [value] is mutated for this instance.
+  /// Creates a forked zone.
   ///
   /// Optional parameter `specification` is passed to [Zone.fork].
-  Zone forkZoneWithValue(T value, {ZoneSpecification specification}) {
+  Zone forkZoneWithValue(T value,
+      {ZoneSpecification specification}) {
+    // Construct a map
     final zoneValues = <dynamic, dynamic>{};
     fillZoneValuesMap(zoneValues, value);
-    return Zone.current
-        .fork(specification: specification, zoneValues: zoneValues);
+
+    // Fork the current zone
+    return Zone.current.fork(
+      specification: specification,
+      zoneValues: zoneValues,
+    );
   }
 
-  /// A convenience method for creating a fork of [Zone.current] where
-  /// [value] is mutated for multiple [ZoneLocal] instances.
+  /// Creates a forked zone that has multiple changes.
   ///
   /// Optional parameter `specification` is passed to [Zone.fork].
   static Zone forkZoneWithValues(Map<ZoneLocal, Object> values,
       {ZoneSpecification specification}) {
+    // Construct a map
     final zoneValues = <Object, Object>{};
     values.forEach((zoneLocal, zoneLocalValue) {
       zoneLocal.fillZoneValuesMap(zoneValues, zoneLocalValue);
     });
-    return Zone.current
-        .fork(specification: specification, zoneValues: zoneValues);
+
+    // Fork the current zone
+    return Zone.current.fork(
+      specification: specification,
+      zoneValues: zoneValues,
+    );
   }
 
-  /// Freezes default values of all ZoneLocal values in your application.
+  /// Equal to calling [ZoneLocal.freezeDefaultValue] for every [ZoneLocal] in
+  /// your application.
   ///
-  /// After calling this method, [isDefaultValueFrozen] of every [ZoneLocal] will be `true`.
+  /// This method is meant for giving confidence in immutability.
   static void freezeDefaultValues() {
     _isEveryDefaultValueFrozen = true;
   }

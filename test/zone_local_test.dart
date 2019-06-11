@@ -6,14 +6,14 @@ import 'package:zone_local/zone_local.dart';
 void main() {
   test("Zone()", () {
     final a = ZoneLocal<String>();
-    expect(a.isDefaultValueFrozen, false);
+    expect(a.isDefaultValueImmutable, false);
     expect(a.defaultValue, null);
     expect(a.value, null);
   });
 
   test("Zone(defaultValue: 'x')", () {
     final a = ZoneLocal<String>(defaultValue: 'x');
-    expect(a.isDefaultValueFrozen, false);
+    expect(a.isDefaultValueImmutable, false);
     expect(a.defaultValue, "x");
     expect(a.value, "x");
   });
@@ -91,13 +91,13 @@ void main() {
     final b = ZoneLocal<String>(defaultValue: "b");
 
     // Test 'a' and 'b'
-    expect(a.isDefaultValueFrozen, isFalse);
-    expect(b.isDefaultValueFrozen, isFalse);
+    expect(a.isDefaultValueImmutable, isFalse);
+    expect(b.isDefaultValueImmutable, isFalse);
 
     // Freeze
     a.freezeDefaultValue("a_frozen");
-    expect(a.isDefaultValueFrozen, isTrue);
-    expect(b.isDefaultValueFrozen, isFalse);
+    expect(a.isDefaultValueImmutable, isTrue);
+    expect(b.isDefaultValueImmutable, isFalse);
     expect(a.value, "a_frozen");
     expect(b.value, "b");
 
@@ -114,8 +114,8 @@ void main() {
     final a = ZoneLocal<String>(defaultValue: "a");
     final b = ZoneLocal<String>(defaultValue: "b");
     ZoneLocal.freezeDefaultValues();
-    expect(a.isDefaultValueFrozen, isTrue);
-    expect(b.isDefaultValueFrozen, isTrue);
+    expect(a.isDefaultValueImmutable, isTrue);
+    expect(b.isDefaultValueImmutable, isTrue);
     expect(a.defaultValue, "a");
     expect(b.defaultValue, "b");
     expect(a.value, "a");
