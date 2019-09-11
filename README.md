@@ -1,3 +1,5 @@
+<a href="https://github.com/terrier989/zone_local"><img alt="GitHub Actions status" src="https://github.com/terrier989/zone_local/workflows/Dart%20CI/badge.svg"></a>
+
 # Introduction
 What's a zone? See [explanation of zones at dartlang.org](https://www.dartlang.org/articles/libraries/zones).
 
