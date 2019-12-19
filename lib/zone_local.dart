@@ -13,7 +13,7 @@ class ZoneLocal<T> {
   Object _zoneValuesKey; // Lazily initialized
 
   /// Constructs an instance that has the default value.
-  ZoneLocal({T defaultValue}) : this._defaultValue = defaultValue;
+  ZoneLocal({T defaultValue}) : _defaultValue = defaultValue;
 
   /// The current default value.
   T get defaultValue => _defaultValue;
@@ -23,12 +23,12 @@ class ZoneLocal<T> {
   /// If [isDefaultValueImmutable] is `true`, this setter throws [StateError].
   set defaultValue(T value) {
     if (isDefaultValueImmutable) {
-      throw StateError("Default value is immutable");
+      throw StateError('Default value is immutable');
     }
-    this._defaultValue = value;
+    _defaultValue = value;
   }
 
-  @Deprecated("This feature will not be supported in the future")
+  @Deprecated('This feature will not be supported in the future')
   Object get zoneEntryKey {
     _zoneValuesKey ??= Object();
     return _zoneValuesKey;
@@ -37,7 +37,7 @@ class ZoneLocal<T> {
   /// Fills a map for [Zone.fork].
   void fillZoneValuesMap(Map<dynamic, dynamic> values, Object value) {
     _zoneValuesKey ??= Object();
-    values[_zoneValuesKey] = new _Variable(value);
+    values[_zoneValuesKey] = _Variable(value);
   }
 
   /// Tells whether [defaultValue] is immutable.
@@ -45,14 +45,14 @@ class ZoneLocal<T> {
   /// You can make default values immutable with [freezeDefaultValue] and
   /// [Zone.freezeDefaultValues].
   bool get isDefaultValueImmutable =>
-      _isEveryDefaultValueFrozen || this._isDefaultValueImmutable;
+      _isEveryDefaultValueFrozen || _isDefaultValueImmutable;
 
   @Deprecated("Use 'isDefaultValueImmutable'")
   bool get isDefaultValueFrozen => isDefaultValueImmutable;
 
   /// Returns the current zone-scoped value.
   T get value {
-    final zoneValueKey = this._zoneValuesKey;
+    final zoneValueKey = _zoneValuesKey;
     if (zoneValueKey == null) {
       // Zones haven't been forked yet,
       // so we don't need to access the zone data at all.
@@ -74,15 +74,14 @@ class ZoneLocal<T> {
   /// If [isDefaultValueImmutable] is `true`, throws [StateError].
   /// After calling this method, [isDefaultValueImmutable] will be `true`.
   void freezeDefaultValue(T value) {
-    this.defaultValue = value;
-    this._isDefaultValueImmutable = true;
+    defaultValue = value;
+    _isDefaultValueImmutable = true;
   }
 
   /// Creates a forked zone.
   ///
   /// Optional parameter `specification` is passed to [Zone.fork].
-  Zone forkZoneWithValue(T value,
-      {ZoneSpecification specification}) {
+  Zone forkZoneWithValue(T value, {ZoneSpecification specification}) {
     // Construct a map
     final zoneValues = <dynamic, dynamic>{};
     fillZoneValuesMap(zoneValues, value);
