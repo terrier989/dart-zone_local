@@ -41,6 +41,9 @@ class ZoneLocal<T> {
     _defaultValue = value;
   }
 
+  /// Key for forking zones.
+  Object get key => _zoneValuesKey ??= Object();
+
   /// Returns the current zone-scoped value.
   T get value {
     final key = _zoneValuesKey;
@@ -55,15 +58,16 @@ class ZoneLocal<T> {
     return defaultValue;
   }
 
+  /// {@nodoc}
+  @Deprecated('use key')
+  Object get zoneEntryKey => key;
+
   /// Forks a new zone. See example for [ZoneLocal].
   Zone forkZoneWithValue(T value) {
     return Zone.current.fork(zoneValues: {
       key: value,
     });
   }
-
-  /// Key for forking zones.
-  Object get key => _zoneValuesKey ??= Object();
 
   /// Prevents further mutations of the default value.
   void freezeDefaultValue(T value) {

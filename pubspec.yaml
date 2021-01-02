@@ -1,5 +1,5 @@
 name: zone_local
-version: 0.2.0-nullsafety.0
+version: 0.2.0-nullsafety.1
 description:
   A simple, type-safe package for declaring static variables (for configuration, etc.) that can
   have zone-scoped values.
